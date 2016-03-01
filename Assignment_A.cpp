@@ -212,6 +212,7 @@ struct recBlock {
     int firstDate, secondDate;
     int fill(char* &pBuffer) {
         vrec.clear();
+        dCount.clear();
         if (*pBuffer == 0) {
             return 0;
         }
@@ -232,6 +233,7 @@ struct recBlock {
 			priceSquare = priceSquare * w + pow(price, 2.0) * (1 - w);
 			volumeAvg = volumeAvg * w + volume * (1 - w);
 			volumeSquare = volumeSquare * w + pow(volume, 2.0) * (1 - w);
+
             if (dCount[r.idate].n < 20) {
                 dCount[r.idate].update(Count);
             }
@@ -240,8 +242,8 @@ struct recBlock {
         }
         int rank;
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	    MaxPrice = priceAvg + 6 * sqrt((-priceAvg * priceAvg + priceSquare) / float(Count));
-	    MaxVolume = volumeAvg + 6 * sqrt((-volumeAvg * volumeAvg + volumeSquare) / float(Count));
+	    MaxPrice = priceAvg + 2 * sqrt((-priceAvg * priceAvg + priceSquare) / float(Count));
+	    MaxVolume = volumeAvg + 2 * sqrt((-volumeAvg * volumeAvg + volumeSquare) / float(Count));
         std::cout << "At rank:" << rank
         << " Count:" << Count << " priceAvg:" << priceAvg << " MaxPrice:" << MaxPrice << " volumeAvg:" << volumeAvg
         << " volumeMax:" << MaxVolume << std::endl;
@@ -296,19 +298,11 @@ struct recBlock {
                     lastDate = record.idate;
                 } else {
 
-                    if (abs(lastTS - record.ts) > 5 * pow(10, 6)) {
+                    if (abs(lastTS - record.ts) > 10 * pow(10, 6)) {
                         if (lastDate == firstDate && record.idate == secondDate) {
-                        	std::cout << "first: " << firstDate << std::endl;
-                        	std::cout << "secon: " << secondDate << std::endl;
-                        	std::cout << "last: " << lastDate << std::endl;
-                        	std::cout << "idate: " << record.idate << std::endl;
                             lastTS = record.ts;
                             lastDate = record.idate;
                         } else {
-                        	std::cout << "first, invalid: " << firstDate << std::endl;
-                        	std::cout << "secon, invalid: " << secondDate << std::endl;
-                        	std::cout << "last, invalid: " << lastDate << std::endl;
-                        	std::cout << "idate, invalid: " << record.idate << std::endl;
                             valid = 0;
                         }
                     } else {
